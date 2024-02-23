@@ -29,6 +29,10 @@ runs:
       env:
         DEBIAN_FRONTEND: noninteractive
       run: |
+        if command -v jq &> /dev/null; then
+          exit 0
+        fi
+
         echo "::group::Download jq"
         set -eu
         if [ "${{runner.os}}" = "Windows" ]; then
