@@ -50,12 +50,17 @@ runs:
         tools=$(go mod edit --json | \
           jq -r '.Require[] | select(.Indirect!=true) | [.Path,.Version] | join("@")')
 
-        needsProtoc=false
         for tool in ${tools}; do
+          IFS='@' read -r -a pair <<< "${tool}"
+          echo "${pair[0]}"
           if [[ "${tool}" == *protoc* ]]; then
             echo "needs-protoc=true" >> $GITHUB_OUTPUT
           fi
-          go install ${tool}
+
+          cmd=$(grep -F "${pair[0]}" ./*.go | sed -nr 's/.*_\s+"([^"]+)".*/\1/p' | head -1)
+          if [ -n "$cmd" ]; then
+            go install "${cmd}@${pair[1]}"
+          fi
         done
 
         echo "::endgroup::"

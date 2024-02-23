@@ -150,7 +150,7 @@ runs:
       if: ${{ always() && steps.go-version.outcome == 'success' }}
       id: go-generate-check
       # https://github.com/orgs/community/discussions/25246
-      uses: canonical/desktop-engineering/gh-actions/go/generate@main
+      uses: 3v1n0/desktop-engineering/gh-actions/go/generate@fix-generate-test
       with:
         tools-directory: ${{ inputs.tools-directory }}
         paths-to-ignore: ${{ inputs.generate-diff-paths-to-ignore }}
