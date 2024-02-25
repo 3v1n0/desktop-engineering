@@ -125,7 +125,7 @@ runs:
           dpkg-buildpackage -D -S --sanitize-env
           echo "::endgroup::"
 
-          mv -v ../"${PKG_NAME}_${PKG_VERSION}.* ${SOURCE_OUTPUT_DIR}
+          mv -v ../"${PKG_NAME}_${PKG_VERSION}".* ${SOURCE_OUTPUT_DIR}
 
     - name: Uploading source packages
       uses: actions/upload-artifact@v4
@@ -143,9 +143,9 @@ runs:
           -v ${{ env.SOURCE_OUTPUT_DIR }}:/${{ env.SOURCE_OUTPUT_DIR }}
         environment:
           SOURCE_OUTPUT_DIR=${{ env.SOURCE_OUTPUT_DIR }}
-          LINTIAN_ARGS=${{ inputs.lintian }}
           PKG_NAME=${{ env.PKG_NAME }}
           PKG_VERSION=${{ env.PKG_VERSION }}
+          LINTIAN_ARGS=${{ inputs.lintian }}
         shell: bash
         workdir: ${{ env.SOURCE_OUTPUT_DIR }}
         run: |
