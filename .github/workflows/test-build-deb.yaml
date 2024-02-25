@@ -38,9 +38,11 @@ jobs:
 
       - name: Checkout code
         uses: actions/checkout@v4
+        with:
+          path: .source
 
       - name: See what's around
         run: find
 
       - name: Build package
-        uses: ./gh-actions/common/build-debian
+        uses: ./.source/gh-actions/common/build-debian
