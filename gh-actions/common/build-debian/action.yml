@@ -124,7 +124,7 @@ runs:
           dpkg-buildpackage -D -S --sanitize-env
           echo "::endgroup::"
 
-          mv -v ../"${PKG_NAME}_${PKG_VERSION}".* ${SOURCE_OUTPUT_DIR}
+          mv -v ../"${PKG_NAME}_${PKG_VERSION}"* ${SOURCE_OUTPUT_DIR}
 
     - name: Uploading source packages
       uses: actions/upload-artifact@v4
