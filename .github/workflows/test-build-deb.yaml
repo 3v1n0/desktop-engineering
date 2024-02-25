@@ -47,9 +47,6 @@ jobs:
         with:
           path: .source
 
-      - name: See what's around
-        run: find
-
       - name: Build package
         uses: ./.source/gh-actions/common/build-debian
         with:
@@ -65,14 +62,12 @@ jobs:
           sudo apt update
           sudo apt install ubuntu-dev-tools
 
-      - name: Get and prepare package source
+      - name: Get package source
         run: |
           set -eu
 
-          echo "::group::Get source"
           pull-lp-source --download-only hello
           dpkg-source -x hello*.dsc hello-src
-          echo "::endgroup::"
 
       - name: Checkout code
         uses: actions/checkout@v4
