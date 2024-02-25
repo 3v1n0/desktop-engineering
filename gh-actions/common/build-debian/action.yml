@@ -212,9 +212,9 @@ runs:
           apt install net-tools
           for if in $(ifconfig -a | grep "^\w" | cut -d: -f1); do
             if [ "$if" != "lo" ]; then
-              ifconfig down "$if"
+              ifconfig -v down "$if"
             fi
-          fi
+          done
           apt remove net-tools
           echo "::endgroup::"
 
