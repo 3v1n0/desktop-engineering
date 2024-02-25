@@ -56,9 +56,9 @@ runs:
       run: |
         set -eu
 
-        echo "::group::Install devscripts"
+        echo "::group::Install dpkg-dev"
         sudo apt update
-        sudo apt install -y devscripts
+        sudo apt install -y dpkg-dev
         echo "::endgroup::"
 
         echo "::group::Create local version with commit and docker container"
@@ -94,7 +94,7 @@ runs:
         options: |
           -v ${{ github.workspace }}:/work -w /work
           -e DEBIAN_FRONTEND=noninteractive
-          -e PKG_VERSION=${{ env.PKG_VERSION }}
+          -e PKG_NAME=${{ env.PKG_NAME }}
           -e PKG_VERSION=${{ env.PKG_VERSION }}
           -e SOURCE_OUTPUT_DIR=${{ env.SOURCE_OUTPUT_DIR }}
         shell: bash
@@ -123,16 +123,22 @@ runs:
 
     - name: Run lintian on sources
       if: inputs.lintian != 'false'
-      shell: bash
       uses: addnab/docker-run-action@v3
       with:
         image: ${{ inputs.docker-image }}
         options: |
           -v ${{ github.workspace }}:/work -w /work
           -e DEBIAN_FRONTEND=noninteractive
-          -e PKG_VERSION=${{ env.PKG_VERSION }}
-          -e PKG_VERSION=${{ env.PKG_VERSION }}
           -e SOURCE_OUTPUT_DIR=${{ env.SOURCE_OUTPUT_DIR }}
+          -e LINTIAN_ARGS=${{ inputs.lintian }}
+        shell: bash
+        run: |
+          echo 'APT::Get::Assume-Yes "true";' > /etc/apt/apt.conf.d/90aptyes
+          apt update
+          apt dist-upgrade
+          apt install lintian
+          lintian ${LINTIAN_ARGS} -- "${SOURCE_OUTPUT_DIR}"/*.changes
+
 
     # # - name: Setup build user
     # #   run: |
