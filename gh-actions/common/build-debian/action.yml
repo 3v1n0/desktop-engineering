@@ -227,7 +227,7 @@ runs:
           iptables -A OUTPUT -m owner --uid-owner $(id -u builder) -j DROP
           echo "::endgroup::"
 
-          echo "::group::Cleanup unneded packages"
+          echo "::group::Cleanup unneeded packages"
           apt autoremove
           echo "::endgroup::"
 
@@ -239,7 +239,7 @@ runs:
           runuser -u builder -- dpkg-buildpackage -D -b --sanitize-env
           echo "::endgroup::"
 
-          mv -v ../*"${PKG_VERSION}"*.deb ${BUILD_OUTPUT_DIR}
+          mv -v ../*"_${PKG_VERSION}_"*.deb ${BUILD_OUTPUT_DIR}
 
     - name: Upload artefacts
       uses: actions/upload-artifact@v4
@@ -247,3 +247,38 @@ runs:
         name: ${{ env.PKG_NAME }}_${{ env.PKG_VERSION }}
         path: ${{ env.BUILD_OUTPUT_DIR }}/
         if-no-files-found: error
+
+    - name: Run lintian on binaries
+      if: inputs.lintian != 'false'
+      uses: kohlerdominik/docker-run-action@v1.1.0
+      with:
+        image: ${{ inputs.docker-image }}
+        environment:
+          TERM=dumb
+          DEBIAN_FRONTEND=noninteractive
+          BUILD_OUTPUT_DIR=${{ env.BUILD_OUTPUT_DIR }}
+          PKG_NAME=${{ env.PKG_NAME }}
+          PKG_VERSION=${{ env.PKG_VERSION }}
+          LINTIAN_ARGS=${{ inputs.lintian }}
+        volumes: ${{ env.BUILD_OUTPUT_DIR }}:/${{ env.BUILD_OUTPUT_DIR }}
+        workdir: ${{ env.BUILD_OUTPUT_DIR }}
+        shell: bash
+        run: |
+          echo 'APT::Get::Assume-Yes "true";' > /etc/apt/apt.conf.d/90aptyes
+          apt update
+          apt dist-upgrade
+
+          echo "::group::Install lintian"
+          apt install adduser lintian
+          echo "::endgroup::"
+
+          echo "::group::Create test user"
+          adduser --disabled-password --gecos "" tester
+          chown tester:tester . -R
+          echo "::endgroup::"
+
+          echo "::group::Run lintian"
+          runuser -u tester -- \
+            lintian ${LINTIAN_ARGS} --pedantic --fail-on error -- \
+              "*_${PKG_VERSION}_*".deb
+          echo "::endgroup::"

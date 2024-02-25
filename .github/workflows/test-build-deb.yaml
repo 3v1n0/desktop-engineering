@@ -7,9 +7,6 @@ on:
     # tags:
     #   - "*"
   pull_request:
-    types:
-      - opened
-      - edited
 
 env:
   DEBIAN_FRONTEND: noninteractive
@@ -17,8 +14,8 @@ env:
   TERM: dumb
 
 jobs:
-  build_deb:
-    name: Test build debian package
+  build_native_deb:
+    name: Test build native debian package
     runs-on: ubuntu-latest
 
     steps:
@@ -27,7 +24,7 @@ jobs:
           sudo apt update
           sudo apt install ubuntu-dev-tools
 
-      - name: Get package source
+      - name: Get and prepare package source
         run: |
           set -eu
 
@@ -38,7 +35,7 @@ jobs:
           mv -v hello-src/* .
           echo "::endgroup::"
 
-          echo "::group::Mark this as a native package"
+          echo "::group::Mark package as a native package"
           echo "3.0 (native)" > debian/source/format
           dch -v$(dpkg-parsechangelog -S Version | cut -f1 -d-).1 \
             "Mark as native package"
@@ -56,4 +53,34 @@ jobs:
       - name: Build package
         uses: ./.source/gh-actions/common/build-debian
         with:
+          docker-image: ubuntu:devel
+
+  build_source_deb:
+    name: Test build debian package
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Install dependencies
+        run: |
+          sudo apt update
+          sudo apt install ubuntu-dev-tools
+
+      - name: Get and prepare package source
+        run: |
+          set -eu
+
+          echo "::group::Get source"
+          pull-lp-source --download-only hello
+          dpkg-source -x hello*.dsc hello-src
+          echo "::endgroup::"
+
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          path: .source
+
+      - name: Build package
+        uses: ./.source/gh-actions/common/build-debian
+        with:
+          source-dir: ./hello-src
           docker-image: ubuntu:devel
