@@ -96,6 +96,8 @@ runs:
       uses: kohlerdominik/docker-run-action@v1.1.0
       with:
         image: ${{ inputs.docker-image }}
+        environment: |
+          EXTRA_BUILD_DEPS="${{ inputs.extra-source-build-deps }}"
         options: |
           -v ${{ github.workspace }}:/${{ github.workspace }} -w ${{ github.workspace }}
           -e DEBIAN_FRONTEND=noninteractive
