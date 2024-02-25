@@ -89,7 +89,7 @@ runs:
         echo "::endgroup::"
 
         echo "::group::Prepare source build"
-        echo SOURCE_OUTPUT_DIR="$( mktemp --directory --tmpdir=$PWD )" >> $GITHUB_ENV
+        echo SOURCE_OUTPUT_DIR="$( mktemp --directory --tmpdir="${PWD}" )" >> $GITHUB_ENV
         echo "::endgroup::"
 
     - name: Prepare Build package sources
@@ -151,8 +151,12 @@ runs:
           echo 'APT::Get::Assume-Yes "true";' > /etc/apt/apt.conf.d/90aptyes
           apt update
           apt dist-upgrade
+
+          echo "::group::Run lintian"
           apt install lintian
-          lintian ${LINTIAN_ARGS} -- "${PKG_NAME}_${PKG_VERSION}_source".changes
+          lintian ${LINTIAN_ARGS} --pedantic --fail-on error -- \
+            "${PKG_NAME}_${PKG_VERSION}_source".changes
+          echo "::endgroup::"
 
     - name: Set up package build
       shell: bash
@@ -161,12 +165,12 @@ runs:
 
         echo "::group::Create build input directory"
         # Appending /source because 'dpkg-source --extract' needs the output directory to be non-existent
-        BUILD_INPUT_DIR="$( mktemp --directory --tmpdir=$PWD )/source"
+        BUILD_INPUT_DIR="$( mktemp --directory --tmpdir="${PWD}" )/source"
         echo BUILD_INPUT_DIR="${BUILD_INPUT_DIR}" >> $GITHUB_ENV
         echo "::endgroup::"
         
         echo "::group::Create build output directory"
-        echo BUILD_OUTPUT_DIR="$( mktemp --directory --tmpdir=$PWD )" >> $GITHUB_ENV
+        echo BUILD_OUTPUT_DIR="$( mktemp --directory --tmpdir="${PWD}" )" >> $GITHUB_ENV
         echo "::endgroup::"
 
         echo "::group::Extract source package"
@@ -198,8 +202,16 @@ runs:
           apt build-dep .
           echo "::endgroup::"
 
-          # Disable internet access
-          rm -f /etc/resolv.conf
+          echo "::group::Create test user"
+          adduser --disabled-password --gec\os "" tester
+          chown tester:tester . -R
+          echo "::endgroup::"
+
+          echo "::group::Fully disable internet access"
+          apt install net-tools
+          ifconfig down eth0
+          apt remove net-tools
+          echo "::endgroup::"
 
           echo "::group::Build debian packages"
           dpkg-buildpackage -D -b --sanitize-env
