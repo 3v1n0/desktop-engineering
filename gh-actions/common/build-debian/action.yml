@@ -202,23 +202,23 @@ runs:
         shell: bash
         run: |
           set -eu
+          echo "::group::Create build user"
+          adduser --disabled-password --gecos "" builder
+          chown builder:builder .. -R
+          echo "::endgroup::"
+
+          echo "::group::Fully disable internet access for user"
+          apt install iptables
+          apt-mark auto iptables
+          iptables -A OUTPUT -m owner --uid-owner $(id -u builder) -j DROP
+          apt autoremove
+          # echo "::endgroup::"
+
           echo "::group::Install build dependencies"
           echo 'APT::Get::Assume-Yes "true";' > /etc/apt/apt.conf.d/90aptyes
           apt update
           apt dist-upgrade
           apt build-dep .
-          echo "::endgroup::"
-
-          echo "::group::Fully disable internet access"
-          apt install net-tools
-          default_gw="$(route -n | awk '$1=="0.0.0.0" {print $2}')"
-          route del default gw "$default_gw"
-          apt remove net-tools
-          # echo "::endgroup::"
-
-          echo "::group::Create build user"
-          adduser --disabled-password --gecos "" builder
-          chown builder:builder .. -R
           echo "::endgroup::"
 
           echo "::group::Build debian packages"
