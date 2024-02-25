@@ -98,6 +98,12 @@ runs:
       shell: bash
       working-directory: ${{ env.SOURCE_OUTPUT_DIR }}
       run: lintian ${{ inputs.lintian }} -- *.changes
+    - name: Upload source packages
+      uses: actions/upload-artifact@v4
+      with:
+        name: ${{ env.PKG_NAME }}_${{ env.PKG_VERSION }} Debian Sources
+        path: ${{ env.SOURCE_OUTPUT_DIR }}/
+        if-no-files-found: error
     - name: Set up package build
       shell: bash
       run: |
