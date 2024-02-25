@@ -48,7 +48,8 @@ inputs:
 
 runs:
   using: 'docker'
-  image: ${{ inputs.docker-image }}
+  # image: ${{ inputs.docker-image }}
+  image: ubuntu:devel
   env:
     DEBIAN_FRONTEND: noninteractive
     AS_USER: runuser -u builder --
