@@ -152,10 +152,19 @@ runs:
           apt update
           apt dist-upgrade
 
-          echo "::group::Run lintian"
+          echo "::group::Install lintian"
           apt install lintian
-          lintian ${LINTIAN_ARGS} --pedantic --fail-on error -- \
-            "${PKG_NAME}_${PKG_VERSION}_source".changes
+          echo "::endgroup::"
+
+          echo "::group::Create test user"
+          adduser --disabled-password --gecos "" tester
+          chown tester:tester . -R
+          echo "::endgroup::"
+
+          echo "::group::Run lintian"
+          runuser -u tester --
+            lintian ${LINTIAN_ARGS} --pedantic --fail-on error -- \
+              "${PKG_NAME}_${PKG_VERSION}_source".changes
           echo "::endgroup::"
 
     - name: Set up package build
@@ -202,19 +211,19 @@ runs:
           apt build-dep .
           echo "::endgroup::"
 
-          echo "::group::Create test user"
-          adduser --disabled-password --gec\os "" tester
-          chown tester:tester . -R
-          echo "::endgroup::"
-
           echo "::group::Fully disable internet access"
           apt install net-tools
           ifconfig down eth0
           apt remove net-tools
           echo "::endgroup::"
 
+          echo "::group::Create build user"
+          adduser --disabled-password --gecos "" builder
+          chown builder:builder . -R
+          echo "::endgroup::"
+
           echo "::group::Build debian packages"
-          dpkg-buildpackage -D -b --sanitize-env
+          runuser -u builder -- dpkg-buildpackage -D -b --sanitize-env
           echo "::endgroup::"
 
           mv -v ../*"${PKG_VERSION}"*.deb ${BUILD_OUTPUT_DIR}
