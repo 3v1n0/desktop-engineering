@@ -93,7 +93,7 @@ runs:
         echo "::endgroup::"
 
     - name: Prepare Build package sources
-      uses: addnab/docker-run-action@v3
+      uses: kohlerdominik/docker-run-action@v1.1.0
       with:
         image: ${{ inputs.docker-image }}
         options: |
@@ -104,6 +104,7 @@ runs:
           -e SOURCE_OUTPUT_DIR=${{ env.SOURCE_OUTPUT_DIR }}
           -e DEB_BUILD_OPTIONS="${{ inputs.DEB_BUILD_OPTIONS }}"
         # -e EXTRA_BUILD_DEPS="${{ inputs.extra-source-build-deps }}"
+        
         shell: bash
         run: |
           set -eu
