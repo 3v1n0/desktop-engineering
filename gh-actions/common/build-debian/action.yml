@@ -162,7 +162,7 @@ runs:
           echo "::endgroup::"
 
           echo "::group::Run lintian"
-          runuser -u tester --
+          runuser -u tester -- \
             lintian ${LINTIAN_ARGS} --pedantic --fail-on error -- \
               "${PKG_NAME}_${PKG_VERSION}_source".changes
           echo "::endgroup::"
