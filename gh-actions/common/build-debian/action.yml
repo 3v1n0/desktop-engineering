@@ -111,7 +111,7 @@ runs:
           apt update
           apt dist-upgrade
           apt build-dep .
-          if [ -n "$EXTRA_BUILD_DEPS" ]; then
+          if [ -n "${EXTRA_BUILD_DEPS}" ]; then
             # Install extra packages for build-deps, to allow downloading vendored sources
             apt install ${EXTRA_BUILD_DEPS}
           fi
