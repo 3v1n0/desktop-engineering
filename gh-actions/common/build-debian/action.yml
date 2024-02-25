@@ -102,6 +102,7 @@ runs:
           -e PKG_NAME="${{ env.PKG_NAME }}"
           -e PKG_VERSION="${{ env.PKG_VERSION }}"
           -e SOURCE_OUTPUT_DIR="${{ env.SOURCE_OUTPUT_DIR }}"
+          -e DEB_BUILD_OPTIONS="${{ inputs.DEB_BUILD_OPTIONS }}"
         # -e EXTRA_BUILD_DEPS="${{ inputs.extra-source-build-deps }}"
         shell: bash
         run: |
@@ -120,7 +121,7 @@ runs:
 
           echo "::group::Build debian source package"
           dpkg-buildpackage -D -S --sanitize-env
-          mv -v ../"${PKG_NAME}"_* "${SOURCE_OUTPUT_DIR}"
+          mv -v ../${PKG_NAME}_* "${SOURCE_OUTPUT_DIR}"
           echo "::endgroup::"
 
     - name: Uploading source packages
