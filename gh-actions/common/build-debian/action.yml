@@ -20,6 +20,11 @@ inputs:
     required: false
     description: Arguments to pass to lintian, if any. Set to false to skip the lintian chek.
     default: ''
+  extra-source-build-deps:
+    description: A list of extra build dependencies required during source build.
+    required: false
+    # FIXME: this should default to '', but we don't want to break job deps for now
+    default: 'ca-certificates git'
 
 
 # The process:
@@ -56,9 +61,9 @@ runs:
       run: |
         set -eu
 
-        echo "::group::Install dpkg-dev"
+        echo "::group::Install devscripts"
         sudo apt update
-        sudo apt install -y dpkg-dev
+        sudo apt install -y devscripts
         echo "::endgroup::"
 
         echo "::group::Create local version with commit and docker container"
@@ -97,6 +102,7 @@ runs:
           -e PKG_NAME=${{ env.PKG_NAME }}
           -e PKG_VERSION=${{ env.PKG_VERSION }}
           -e SOURCE_OUTPUT_DIR=${{ env.SOURCE_OUTPUT_DIR }}
+          -e EXTRA_BUILD_DEPS=${{ inputs.extra-source-build-deps }}
         shell: bash
         run: |
           set -eu
@@ -105,8 +111,10 @@ runs:
           apt update
           apt dist-upgrade
           apt build-dep .
-          # Install extra packages for build-deps, to allow downloading vendored sources
-          apt install ca-certificates git
+          if [ -n "$EXTRA_BUILD_DEPS" ]; then
+            # Install extra packages for build-deps, to allow downloading vendored sources
+            apt install ${EXTRA_BUILD_DEPS}
+          fi
           echo "::endgroup::"
 
           echo "::group::Build debian source package"
