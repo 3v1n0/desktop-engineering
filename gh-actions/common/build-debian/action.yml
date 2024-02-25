@@ -102,7 +102,7 @@ runs:
           -e PKG_NAME="${{ env.PKG_NAME }}"
           -e PKG_VERSION="${{ env.PKG_VERSION }}"
           -e SOURCE_OUTPUT_DIR="${{ env.SOURCE_OUTPUT_DIR }}"
-          -e EXTRA_BUILD_DEPS="${{ inputs.extra-source-build-deps }}"
+        # -e EXTRA_BUILD_DEPS="${{ inputs.extra-source-build-deps }}"
         shell: bash
         run: |
           set -eu
@@ -111,10 +111,11 @@ runs:
           apt update
           apt dist-upgrade
           apt build-dep .
-          if [ -n "${EXTRA_BUILD_DEPS}" ]; then
-            # Install extra packages for build-deps, to allow downloading vendored sources
-            apt install ${EXTRA_BUILD_DEPS}
-          fi
+          apt install git ca-certificates
+          # if [ -n "${EXTRA_BUILD_DEPS}" ]; then
+          #   # Install extra packages for build-deps, to allow downloading vendored sources
+          #   apt install ${EXTRA_BUILD_DEPS}
+          # fi
           echo "::endgroup::"
 
           echo "::group::Build debian source package"
