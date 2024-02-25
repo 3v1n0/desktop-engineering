@@ -144,7 +144,7 @@ runs:
           SOURCE_OUTPUT_DIR=${{ env.SOURCE_OUTPUT_DIR }}
           LINTIAN_ARGS=${{ inputs.lintian }}
         shell: bash
-        workdir: work/${{ env.SOURCE_OUTPUT_DIR }}
+        workdir: ${{ env.SOURCE_OUTPUT_DIR }}
         run: |
           echo 'APT::Get::Assume-Yes "true";' > /etc/apt/apt.conf.d/90aptyes
           apt update
