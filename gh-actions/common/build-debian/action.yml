@@ -121,6 +121,7 @@ runs:
 
           echo "::group::Build debian source package"
           dpkg-buildpackage -D -S --sanitize-env
+          find ../
           mv -v ../${PKG_NAME}_* "${SOURCE_OUTPUT_DIR}"
           echo "::endgroup::"
 
