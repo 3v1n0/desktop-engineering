@@ -113,10 +113,10 @@ runs:
           apt dist-upgrade
           apt build-dep .
           apt install git ca-certificates
-          # if [ -n "${EXTRA_BUILD_DEPS}" ]; then
-          #   # Install extra packages for build-deps, to allow downloading vendored sources
-          #   apt install ${EXTRA_BUILD_DEPS}
-          # fi
+          if [ -n "${EXTRA_BUILD_DEPS}" ]; then
+            # Install extra packages for build-deps, to allow downloading vendored sources
+            apt install ${EXTRA_BUILD_DEPS}
+          fi
           echo "::endgroup::"
 
           echo "::group::Build debian source package"
