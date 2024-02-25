@@ -52,46 +52,63 @@ runs:
   # image: ubuntu:devel
   steps:
     - name: Set up source package build
+      shell: bash
+      run: |
+        set -eu
+
+        echo "::group::Install devscripts"
+        sudo apt update
+        sudo apt install -y devscripts
+        echo "::endgroup::"
+
+        echo "::group::Create local version with commit and docker container"
+        cd '${{ inputs.source-dir }}'
+
+        # Sanitize the docker name so that it stick to debian policy
+        # https://www.debian.org/doc/debian-policy/ch-controlfields.html#version
+        sanitized_docker=$( echo "${{ inputs.docker-image }}" | sed -r 's/[^a-zA-Z0-9.+~]+/+/g' )
+
+        # Short commit to avoid "package-has-long-file-name"
+        commit=$(echo ${{ github.sha }} | cut -c1-8)
+
+        export DEBFULLNAME="GitHub actions runner"
+        export DEBEMAIL="noreply@github.com"
+        debchange --local "~${sanitized_docker}+${commit}" "Github build. Run id: ${{ github.run_id }}. Run number: ${{ github.run_number }}."
+        
+        echo "::endgroup::"
+
+        echo "::group::Parsing name and version"
+        echo PKG_NAME="$( dpkg-parsechangelog --show-field source )" >> $GITHUB_ENV
+        echo PKG_VERSION="$( dpkg-parsechangelog --show-field version )" >> $GITHUB_ENV
+        cd -
+        echo "::endgroup::"
+
+        echo "::group::Prepare source build"
+        echo SOURCE_OUTPUT_DIR="$( mktemp --directory --tmpdir=. )" >> $GITHUB_ENV
+        echo "::endgroup::"
+
+    - name: Prepare Build package sources
       uses: addnab/docker-run-action@v3
       with:
         image: ${{ inputs.docker-image }}
-        options: -v ${{ github.workspace }}:/work -w /work -v /github:/github -e DEBIAN_FRONTEND=noninteractive -e GITHUB_ENV
+        options: |
+          -v ${{ github.workspace }}:/work -w /work
+          -e DEBIAN_FRONTEND=noninteractive
+          -e PKG_VERSION=${{ env.PKG_VERSION }}
+          -e PKG_VERSION=${{ env.PKG_VERSION }}
+          -e SOURCE_OUTPUT_DIR=${{ env.SOURCE_OUTPUT_DIR }}
         shell: bash
         run: |
           set -eu
+          dpkg-buildpackage -D -S --sanitize-env
+          mv -v ../"${PKG_NAME}"_* "${SOURCE_OUTPUT_DIR}"
 
-          echo "$GITHUB_ENV"
-
-          echo "::group::Install devscripts"
-          apt update
-          apt install -y devscripts
-          echo "::endgroup::"
-
-          echo "::group::Create local version with commit and docker container"
-          cd '${{ inputs.source-dir }}'
-
-          # Sanitize the docker name so that it stick to debian policy
-          # https://www.debian.org/doc/debian-policy/ch-controlfields.html#version
-          sanitized_docker=$( echo "${{ inputs.docker-image }}" | sed -r 's/[^a-zA-Z0-9.+~]+/+/g' )
-
-          # Short commit to avoid "package-has-long-file-name"
-          commit=$(echo ${{ github.sha }} | cut -c1-8)
-
-          export DEBFULLNAME="GitHub actions runner"
-          export DEBEMAIL="noreply@github.com"
-          debchange --local "~${sanitized_docker}+${commit}" "Github build. Run id: ${{ github.run_id }}. Run number: ${{ github.run_number }}."
-          
-          echo "::endgroup::"
-
-          echo "::group::Parsing name and version"
-          echo PKG_NAME="$( dpkg-parsechangelog --show-field source )" >> $GITHUB_ENV
-          echo PKG_VERSION="$( dpkg-parsechangelog --show-field version )" >> $GITHUB_ENV
-          cd -
-          echo "::endgroup::"
-
-          echo "::group::Prepare source build"
-          echo SOURCE_OUTPUT_DIR="$( mktemp --directory --tmpdir=. )" >> $GITHUB_ENV
-          echo "::endgroup::"
+    - name: Uploading source packages
+      uses: actions/upload-artifact@v4
+      with:
+        name: ${{ env.PKG_NAME }}_${{ env.PKG_VERSION }} Debian Sources
+        path: ${{ env.SOURCE_OUTPUT_DIR }}/
+        if-no-files-found: error
 
     # # - name: Setup build user
     # #   run: |
