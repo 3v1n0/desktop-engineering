@@ -101,6 +101,7 @@ runs:
         run: |
           set -eu
           echo "::group::Install build dependencies"
+          apt update
           apt build-dep .
           echo "::endgroup::"
 
