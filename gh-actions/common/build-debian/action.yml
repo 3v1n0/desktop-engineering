@@ -66,8 +66,8 @@ runs:
           set -eu
 
           echo "::group::Install devscripts"
-          sudo apt update
-          sudo apt install -y devscripts
+          apt update
+          apt install -y devscripts
           echo "::endgroup::"
 
           echo "::group::Create local version with commit and docker container"
