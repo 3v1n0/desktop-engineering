@@ -209,15 +209,11 @@ runs:
           apt build-dep .
           echo "::endgroup::"
 
-          # echo "::group::Fully disable internet access"
-          # apt install net-tools
-          # for if in $(ifconfig -a | grep "^\w" | cut -d: -f1); do
-          #   if [ "$if" != "lo" ]; then
-          #     echo "Disabling network interface '$if'"
-          #     ifconfig -v "$if" down
-          #   fi
-          # done
-          # apt remove net-tools
+          echo "::group::Fully disable internet access"
+          apt install net-tools
+          default_gw="$(route -n | awk '$1=="0.0.0.0" {print $2}')"
+          route del default gw "$default_gw"
+          apt remove net-tools
           # echo "::endgroup::"
 
           echo "::group::Create build user"
