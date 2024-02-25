@@ -95,6 +95,7 @@ runs:
       with:
         image: ${{ inputs.docker-image }}
         environment: |
+          TERM: dumb
           DEBIAN_FRONTEND=noninteractive
           PKG_NAME=${{ env.PKG_NAME }}
           PKG_VERSION=${{ env.PKG_VERSION }}
@@ -190,6 +191,7 @@ runs:
       with:
         image: ${{ inputs.docker-image }}
         environment: |
+          TERM: dumb
           DEBIAN_FRONTEND=noninteractive
           PKG_NAME=${{ env.PKG_NAME }}
           PKG_VERSION=${{ env.PKG_VERSION }}
@@ -202,6 +204,12 @@ runs:
         shell: bash
         run: |
           set -eu
+          echo "::group::Update builder instance"
+          echo 'APT::Get::Assume-Yes "true";' > /etc/apt/apt.conf.d/90aptyes
+          apt update
+          apt dist-upgrade
+          echo "::endgroup::"
+
           echo "::group::Create build user"
           apt install adduser
           apt-mark auto adduser
@@ -220,9 +228,6 @@ runs:
           echo "::endgroup::"
 
           echo "::group::Install build dependencies"
-          echo 'APT::Get::Assume-Yes "true";' > /etc/apt/apt.conf.d/90aptyes
-          apt update
-          apt dist-upgrade
           apt build-dep .
           echo "::endgroup::"
 
