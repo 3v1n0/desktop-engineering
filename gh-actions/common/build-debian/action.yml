@@ -50,14 +50,14 @@ runs:
   using: 'composite'
   # image: ${{ inputs.docker-image }}
   # image: ubuntu:devel
-  env:
-    DEBIAN_FRONTEND: noninteractive
-    AS_USER: runuser -u builder --
-    DEB_BUILD_OPTIONS: ${{ inputs.DEB_BUILD_OPTIONS }}
   steps:
     - name: Set up source package build
       uses: docker://${{ inputs.docker-image }}
       shell: bash
+      env:
+        DEBIAN_FRONTEND: noninteractive
+        AS_USER: runuser -u builder --
+        DEB_BUILD_OPTIONS: ${{ inputs.DEB_BUILD_OPTIONS }}
       run: |
         set -eu
 
