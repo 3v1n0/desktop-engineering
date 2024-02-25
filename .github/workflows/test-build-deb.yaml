@@ -35,7 +35,12 @@ jobs:
           dpkg-source -x hello*.dsc hello-src
           rm -rf hello_*
           mv -v hello-src/* .
-          rmdir hello-src
+
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: See what's around
+        run: find
 
       - name: Build package
         uses: ./gh-actions/common/build-debian

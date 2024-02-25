@@ -203,6 +203,8 @@ runs:
         run: |
           set -eu
           echo "::group::Create build user"
+          sudo apt install adduser
+          sudo apt-mark auto adduser
           adduser --disabled-password --gecos "" builder
           chown builder:builder .. -R
           echo "::endgroup::"
@@ -211,8 +213,11 @@ runs:
           apt install iptables
           apt-mark auto iptables
           iptables -A OUTPUT -m owner --uid-owner $(id -u builder) -j DROP
+          echo "::endgroup::"
+
+          echo "::group::Cleanup unneded packages"
           apt autoremove
-          # echo "::endgroup::"
+          echo "::endgroup::"
 
           echo "::group::Install build dependencies"
           echo 'APT::Get::Assume-Yes "true";' > /etc/apt/apt.conf.d/90aptyes
