@@ -95,113 +95,113 @@ runs:
         echo SOURCE_OUTPUT_DIR="$( mktemp --directory --tmpdir=. )" >> $GITHUB_ENV
         echo "::endgroup::"
 
-    # - name: Setup build user
-    #   run: |
-    #     adduser --disabled-password --gecos "" builder
-    #     chown builder:builder . -R
+    # # - name: Setup build user
+    # #   run: |
+    # #     adduser --disabled-password --gecos "" builder
+    # #     chown builder:builder . -R
 
-    # - name: Install build dependencies
+    # # - name: Install build dependencies
+    # #   run: |
+    # #     set -eu
+    # #     apt build-dep .
+
+    # - name: Build source package
+    #   uses: addnab/docker-run-action@v3
+    #   with:
+    #     image: ${{ inputs.docker-image }}
+    #     options: -v ${{ github.workspace }}:/work -w /work -e DEBIAN_FRONTEND=noninteractive
+    #     shell: bash
+    #     run: |
+    #       set -eu
+    #       dpkg-buildpackage -D -S --sanitize-env
+    #       mv -v ../"${{ env.PKG_NAME }}"_* "${{ env.SOURCE_OUTPUT_DIR }}"
+
+    # # - name: Build source packages
+    # # # FIXME: Support local docker files too
+    # #   image: ${{ inputs.docker-image }}
+    # #   options: -v ${{ github.workspace }}:/work -w /work -e DEBIAN_FRONTEND=noninteractive
+
+    # # - name: Build packages
+    #   # run: |
+    #   #   source_name=$(dpkg-parsechangelog -S Source)
+    #   #   mv -v ../"${{ env.PKG_NAME }}"_* "${{ env.SOURCE_OUTPUT_DIR }}"
+    #   #   ls -lht *.*deb
+    # - name: Uploading source packages
+    #   uses: actions/upload-artifact@v4
+    #   with:
+    #     name: ${{ env.PKG_NAME }}_${{ env.PKG_VERSION }} Debian Sources
+    #     path: ${{ env.SOURCE_OUTPUT_DIR }}/
+    #     if-no-files-found: error
+    # # - name: Build source package
+    # #   uses: jtdor/build-deb-action@v1
+    # #   with:
+    # #     source-dir: ${{ inputs.source-dir }}
+    # #     artifacts-dir: ${{ env.SOURCE_OUTPUT_DIR }}
+    # #     docker-image: ${{ inputs.docker-image }}
+    # #     buildpackage-opts: --build=source
+    # #     extra-build-deps: ca-certificates git
+    # #     before-build-hook: |
+    # #       GITHUB_TOKEN="${{ inputs.token }}"
+    # #       if [ -n "${GITHUB_TOKEN}" ]; then
+    # #         git config --system url."https://api:${GITHUB_TOKEN}@github.com/".insteadOf "https://github.com/"
+    # #       fi
+    # - name: Run lintian on sources
+    #   if: inputs.lintian != 'false'
+    #   shell: bash
+    #   working-directory: ${{ env.SOURCE_OUTPUT_DIR }}
+    #   run: lintian ${{ inputs.lintian }} -- *.changes
+
+    # - name: Disable Internet access
+    #   if: inputs.lintian != 'false'
+    #   shell: bash
     #   run: |
     #     set -eu
-    #     apt build-dep .
+    #     apt remove ca-certificates || true
+    #     rm -f /etc/resolv.conf
 
-    - name: Build source package
-      uses: addnab/docker-run-action@v3
-      with:
-        image: ${{ inputs.docker-image }}
-        options: -v ${{ github.workspace }}:/work -w /work -e DEBIAN_FRONTEND=noninteractive
-        shell: bash
-        run: |
-          set -eu
-          dpkg-buildpackage -D -S --sanitize-env
-          mv -v ../"${{ env.PKG_NAME }}"_* "${{ env.SOURCE_OUTPUT_DIR }}"
+    # - name: Set up package build
+    #   shell: bash
+    #   run: |
+    #     set -eu
 
-    # - name: Build source packages
-    # # FIXME: Support local docker files too
-    #   image: ${{ inputs.docker-image }}
-    #   options: -v ${{ github.workspace }}:/work -w /work -e DEBIAN_FRONTEND=noninteractive
-
-    # - name: Build packages
-      # run: |
-      #   source_name=$(dpkg-parsechangelog -S Source)
-      #   mv -v ../"${{ env.PKG_NAME }}"_* "${{ env.SOURCE_OUTPUT_DIR }}"
-      #   ls -lht *.*deb
-    - name: Uploading source packages
-      uses: actions/upload-artifact@v4
-      with:
-        name: ${{ env.PKG_NAME }}_${{ env.PKG_VERSION }} Debian Sources
-        path: ${{ env.SOURCE_OUTPUT_DIR }}/
-        if-no-files-found: error
-    # - name: Build source package
-    #   uses: jtdor/build-deb-action@v1
-    #   with:
-    #     source-dir: ${{ inputs.source-dir }}
-    #     artifacts-dir: ${{ env.SOURCE_OUTPUT_DIR }}
-    #     docker-image: ${{ inputs.docker-image }}
-    #     buildpackage-opts: --build=source
-    #     extra-build-deps: ca-certificates git
-    #     before-build-hook: |
-    #       GITHUB_TOKEN="${{ inputs.token }}"
-    #       if [ -n "${GITHUB_TOKEN}" ]; then
-    #         git config --system url."https://api:${GITHUB_TOKEN}@github.com/".insteadOf "https://github.com/"
-    #       fi
-    - name: Run lintian on sources
-      if: inputs.lintian != 'false'
-      shell: bash
-      working-directory: ${{ env.SOURCE_OUTPUT_DIR }}
-      run: lintian ${{ inputs.lintian }} -- *.changes
-
-    - name: Disable Internet access
-      if: inputs.lintian != 'false'
-      shell: bash
-      run: |
-        set -eu
-        apt remove ca-certificates || true
-        rm -f /etc/resolv.conf
-
-    - name: Set up package build
-      shell: bash
-      run: |
-        set -eu
-
-        echo "::group::Create build input directory"
-        # Appending /source because 'dpkg-source --extract' needs the output directory to be non-existent
-        BUILD_INPUT_DIR="$( $AS_USER mktemp --directory --tmpdir='.' )/source"
-        echo BUILD_INPUT_DIR="${BUILD_INPUT_DIR}" >> $GITHUB_ENV
-        echo "::endgroup::"
+    #     echo "::group::Create build input directory"
+    #     # Appending /source because 'dpkg-source --extract' needs the output directory to be non-existent
+    #     BUILD_INPUT_DIR="$( $AS_USER mktemp --directory --tmpdir='.' )/source"
+    #     echo BUILD_INPUT_DIR="${BUILD_INPUT_DIR}" >> $GITHUB_ENV
+    #     echo "::endgroup::"
         
-        echo "::group::Create build output directory"
-        echo BUILD_OUTPUT_DIR="$( $AS_USER mktemp --directory --tmpdir='.' )" >> $GITHUB_ENV
-        echo "::endgroup::"
+    #     echo "::group::Create build output directory"
+    #     echo BUILD_OUTPUT_DIR="$( $AS_USER mktemp --directory --tmpdir='.' )" >> $GITHUB_ENV
+    #     echo "::endgroup::"
 
-        echo "::group::Extract source package"
-        BUILD_INPUT_DIR=$(realpath "${BUILD_INPUT_DIR}")
-        cd ${{ env.SOURCE_OUTPUT_DIR }}
-        dpkg-source --extract ${{ env.PKG_NAME }}_${{ env.PKG_VERSION }}.dsc "${BUILD_INPUT_DIR}"
-        echo "::endgroup::"
-    - name: Build package
-      run: |
-        set -eu
-        cd "${{ env.BUILD_INPUT_DIR }}"
-        $AS_USER dpkg-buildpackage -b --sanitize-env
-        mv -v ../*.*deb "${{ env.BUILD_OUTPUT_DIR }}"
-        # artifacts-dir: ${{ env.BUILD_OUTPUT_DIR }}
-        # source-dir: ${{ env.BUILD_INPUT_DIR }}
-        # docker-image: ${{ inputs.docker-image }}
+    #     echo "::group::Extract source package"
+    #     BUILD_INPUT_DIR=$(realpath "${BUILD_INPUT_DIR}")
+    #     cd ${{ env.SOURCE_OUTPUT_DIR }}
+    #     dpkg-source --extract ${{ env.PKG_NAME }}_${{ env.PKG_VERSION }}.dsc "${BUILD_INPUT_DIR}"
+    #     echo "::endgroup::"
     # - name: Build package
-    #   uses: jtdor/build-deb-action@v1
+    #   run: |
+    #     set -eu
+    #     cd "${{ env.BUILD_INPUT_DIR }}"
+    #     $AS_USER dpkg-buildpackage -b --sanitize-env
+    #     mv -v ../*.*deb "${{ env.BUILD_OUTPUT_DIR }}"
+    #     # artifacts-dir: ${{ env.BUILD_OUTPUT_DIR }}
+    #     # source-dir: ${{ env.BUILD_INPUT_DIR }}
+    #     # docker-image: ${{ inputs.docker-image }}
+    # # - name: Build package
+    # #   uses: jtdor/build-deb-action@v1
+    # #   with:
+    # #     artifacts-dir: ${{ env.BUILD_OUTPUT_DIR }}
+    # #     source-dir: ${{ env.BUILD_INPUT_DIR }}
+    # #     docker-image: ${{ inputs.docker-image }}
+    # - name: Copy source package to output dir
+    #   shell: bash
+    #   run: |
+    #     set -eu
+    #     cp -r ${{ env.SOURCE_OUTPUT_DIR }}/* ${{ env.BUILD_OUTPUT_DIR }}
+    # - name: Upload artefacts
+    #   uses: actions/upload-artifact@v4
     #   with:
-    #     artifacts-dir: ${{ env.BUILD_OUTPUT_DIR }}
-    #     source-dir: ${{ env.BUILD_INPUT_DIR }}
-    #     docker-image: ${{ inputs.docker-image }}
-    - name: Copy source package to output dir
-      shell: bash
-      run: |
-        set -eu
-        cp -r ${{ env.SOURCE_OUTPUT_DIR }}/* ${{ env.BUILD_OUTPUT_DIR }}
-    - name: Upload artefacts
-      uses: actions/upload-artifact@v4
-      with:
-        name: ${{ env.PKG_NAME }}_${{ env.PKG_VERSION }}
-        path: ${{ env.BUILD_OUTPUT_DIR }}/
-        if-no-files-found: error
+    #     name: ${{ env.PKG_NAME }}_${{ env.PKG_VERSION }}
+    #     path: ${{ env.BUILD_OUTPUT_DIR }}/
+    #     if-no-files-found: error
