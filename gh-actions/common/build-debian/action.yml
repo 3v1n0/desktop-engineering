@@ -124,7 +124,7 @@ runs:
           echo "::group::Build debian source package"
           dpkg-buildpackage -D -S --sanitize-env
           set -x
-          mv -v $(find ../ -maxdepth 1 -name "${PKG_NAME}_*") ${SOURCE_OUTPUT_DIR}
+          mv -v ../"${PKG_NAME}_*" ${SOURCE_OUTPUT_DIR}
           echo "::endgroup::"
 
     - name: Uploading source packages
