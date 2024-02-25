@@ -95,7 +95,7 @@ runs:
       with:
         image: ${{ inputs.docker-image }}
         environment: |
-          TERM: dumb
+          TERM=dumb
           DEBIAN_FRONTEND=noninteractive
           PKG_NAME=${{ env.PKG_NAME }}
           PKG_VERSION=${{ env.PKG_VERSION }}
@@ -137,6 +137,8 @@ runs:
       with:
         image: ${{ inputs.docker-image }}
         environment:
+          TERM=dumb
+          DEBIAN_FRONTEND=noninteractive
           SOURCE_OUTPUT_DIR=${{ env.SOURCE_OUTPUT_DIR }}
           PKG_NAME=${{ env.PKG_NAME }}
           PKG_VERSION=${{ env.PKG_VERSION }}
@@ -190,8 +192,9 @@ runs:
       uses: kohlerdominik/docker-run-action@v1.1.0
       with:
         image: ${{ inputs.docker-image }}
+        options: --cap-add=NET_ADMIN
         environment: |
-          TERM: dumb
+          TERM=dumb
           DEBIAN_FRONTEND=noninteractive
           PKG_NAME=${{ env.PKG_NAME }}
           PKG_VERSION=${{ env.PKG_VERSION }}
