@@ -47,15 +47,16 @@ inputs:
 #     └── ${{ env.BUILD_OUTPUT_DIR }}
 
 runs:
-  using: 'docker'
+  using: 'composite'
   # image: ${{ inputs.docker-image }}
-  image: ubuntu:devel
+  # image: ubuntu:devel
   env:
     DEBIAN_FRONTEND: noninteractive
     AS_USER: runuser -u builder --
     DEB_BUILD_OPTIONS: ${{ inputs.DEB_BUILD_OPTIONS }}
   steps:
     - name: Set up source package build
+      uses: docker://${{ inputs.docker-image }}
       shell: bash
       run: |
         set -eu
@@ -91,20 +92,23 @@ runs:
         echo SOURCE_OUTPUT_DIR="$( mktemp --directory --tmpdir=. )" >> $GITHUB_ENV
         echo "::endgroup::"
 
-    - name: Setup build user
-      run: |
-        adduser --disabled-password --gecos "" builder
-        chown builder:builder . -R
+    # - name: Setup build user
+    #   run: |
+    #     adduser --disabled-password --gecos "" builder
+    #     chown builder:builder . -R
 
-    - name: Install build dependencies
-      run: |
-        set -eu
-        apt build-dep .
+    # - name: Install build dependencies
+    #   run: |
+    #     set -eu
+    #     apt build-dep .
 
-    - name: Build source package
-      run: |
-        set -eu
-        $AS_USER dpkg-buildpackage -D -S --sanitize-env
+    # - name: Build source package
+    #   run: |
+    #     set -eu
+    #     $AS_USER dpkg-buildpackage -D -S --sanitize-env
+    - name: Build source packages
+    # FIXME: Support local docker files too
+      uses: docker://${{ inputs.docker-image }}
 
     - name: Build packages
       run: |
