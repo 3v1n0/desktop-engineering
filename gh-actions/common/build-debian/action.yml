@@ -12,7 +12,7 @@ inputs:
   DEB_BUILD_OPTIONS:
     required: false
     default: ''
-    description: The DEB_BUILD_OPTIONS environment variable.
+    description: The DEB_BUILD_OPTIONS environment variable that is used during builds.
   token:
     required: false
     description: If provided, used for git authentication in the source build
@@ -95,9 +95,10 @@ runs:
       with:
         image: ${{ inputs.docker-image }}
         environment: |
+          TERM=dumb
           DEBIAN_FRONTEND=noninteractive
           PKG_NAME=${{ env.PKG_NAME }}
-          PKG_VERSION=${{ env.PKG_VERSION }}
+          SOURCE_INPUT_DIR=${{ github.workspace }}/${{ inputs.source-dir }}
           SOURCE_OUTPUT_DIR=${{ env.SOURCE_OUTPUT_DIR }}
           DEB_BUILD_OPTIONS=${{ inputs.DEB_BUILD_OPTIONS }}
           EXTRA_BUILD_DEPS=${{ inputs.extra-source-build-deps }}
@@ -106,10 +107,20 @@ runs:
         shell: bash
         run: |
           set -eu
-          echo "::group::Install build dependencies"
+          echo "::group::Update builder instance"
           echo 'APT::Get::Assume-Yes "true";' > /etc/apt/apt.conf.d/90aptyes
           apt update
           apt dist-upgrade
+          echo "::endgroup::"
+
+          cd "${SOURCE_INPUT_DIR}"
+
+          GITHUB_TOKEN="${{ inputs.token }}"
+          if [ -n "${GITHUB_TOKEN}" ]; then
+            git config --system url."https://api:${GITHUB_TOKEN}@github.com/".insteadOf "https://github.com/"
+          fi
+
+          echo "::group::Install build dependencies"
           apt build-dep .
           if [ -n "${EXTRA_BUILD_DEPS}" ]; then
             # Install extra packages for build-deps, to allow downloading vendored sources
@@ -121,7 +132,7 @@ runs:
           dpkg-buildpackage -D -S --sanitize-env
           echo "::endgroup::"
 
-          mv -v ../"${PKG_NAME}_${PKG_VERSION}"* ${SOURCE_OUTPUT_DIR}
+          mv -v ../"${PKG_NAME}_"* ${SOURCE_OUTPUT_DIR}
 
     - name: Uploading source packages
       uses: actions/upload-artifact@v4
@@ -136,6 +147,8 @@ runs:
       with:
         image: ${{ inputs.docker-image }}
         environment:
+          TERM=dumb
+          DEBIAN_FRONTEND=noninteractive
           SOURCE_OUTPUT_DIR=${{ env.SOURCE_OUTPUT_DIR }}
           PKG_NAME=${{ env.PKG_NAME }}
           PKG_VERSION=${{ env.PKG_VERSION }}
@@ -189,7 +202,9 @@ runs:
       uses: kohlerdominik/docker-run-action@v1.1.0
       with:
         image: ${{ inputs.docker-image }}
+        options: --cap-add=NET_ADMIN
         environment: |
+          TERM=dumb
           DEBIAN_FRONTEND=noninteractive
           PKG_NAME=${{ env.PKG_NAME }}
           PKG_VERSION=${{ env.PKG_VERSION }}
@@ -202,7 +217,15 @@ runs:
         shell: bash
         run: |
           set -eu
+          echo "::group::Update builder instance"
+          echo 'APT::Get::Assume-Yes "true";' > /etc/apt/apt.conf.d/90aptyes
+          apt update
+          apt dist-upgrade
+          echo "::endgroup::"
+
           echo "::group::Create build user"
+          apt install adduser
+          apt-mark auto adduser
           adduser --disabled-password --gecos "" builder
           chown builder:builder .. -R
           echo "::endgroup::"
@@ -211,13 +234,13 @@ runs:
           apt install iptables
           apt-mark auto iptables
           iptables -A OUTPUT -m owner --uid-owner $(id -u builder) -j DROP
+          echo "::endgroup::"
+
+          echo "::group::Cleanup unneeded packages"
           apt autoremove
-          # echo "::endgroup::"
+          echo "::endgroup::"
 
           echo "::group::Install build dependencies"
-          echo 'APT::Get::Assume-Yes "true";' > /etc/apt/apt.conf.d/90aptyes
-          apt update
-          apt dist-upgrade
           apt build-dep .
           echo "::endgroup::"
 
@@ -225,7 +248,7 @@ runs:
           runuser -u builder -- dpkg-buildpackage -D -b --sanitize-env
           echo "::endgroup::"
 
-          mv -v ../*"${PKG_VERSION}"*.deb ${BUILD_OUTPUT_DIR}
+          mv -v ../*"_${PKG_VERSION}_"*.deb "${BUILD_OUTPUT_DIR}"
 
     - name: Upload artefacts
       uses: actions/upload-artifact@v4
@@ -233,3 +256,37 @@ runs:
         name: ${{ env.PKG_NAME }}_${{ env.PKG_VERSION }}
         path: ${{ env.BUILD_OUTPUT_DIR }}/
         if-no-files-found: error
+
+    - name: Run lintian on binaries
+      if: inputs.lintian != 'false'
+      uses: kohlerdominik/docker-run-action@v1.1.0
+      with:
+        image: ${{ inputs.docker-image }}
+        environment:
+          TERM=dumb
+          DEBIAN_FRONTEND=noninteractive
+          PKG_NAME=${{ env.PKG_NAME }}
+          PKG_VERSION=${{ env.PKG_VERSION }}
+          LINTIAN_ARGS=${{ inputs.lintian }}
+        volumes: ${{ env.BUILD_OUTPUT_DIR }}:/${{ env.BUILD_OUTPUT_DIR }}
+        workdir: ${{ env.BUILD_OUTPUT_DIR }}
+        shell: bash
+        run: |
+          echo 'APT::Get::Assume-Yes "true";' > /etc/apt/apt.conf.d/90aptyes
+          apt update
+          apt dist-upgrade
+
+          echo "::group::Install lintian"
+          apt install adduser lintian
+          echo "::endgroup::"
+
+          echo "::group::Create test user"
+          adduser --disabled-password --gecos "" tester
+          chown tester:tester . -R
+          echo "::endgroup::"
+
+          echo "::group::Run lintian"
+          runuser -u tester -- \
+            lintian ${LINTIAN_ARGS} --pedantic --fail-on error -- \
+              *_"${PKG_VERSION}"_*.deb
+          echo "::endgroup::"
