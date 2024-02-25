@@ -97,7 +97,7 @@ runs:
       with:
         image: ${{ inputs.docker-image }}
         options: |
-          -v ${{ github.workspace }} -w ${{ github.workspace }}
+          -v ${{ github.workspace }}:/${{ github.workspace }} -w ${{ github.workspace }}
           -e DEBIAN_FRONTEND=noninteractive
           -e PKG_NAME="${{ env.PKG_NAME }}"
           -e PKG_VERSION="${{ env.PKG_VERSION }}"
