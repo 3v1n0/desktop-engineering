@@ -101,8 +101,8 @@ runs:
           SOURCE_OUTPUT_DIR=${{ env.SOURCE_OUTPUT_DIR }}
           DEB_BUILD_OPTIONS=${{ inputs.DEB_BUILD_OPTIONS }}
           EXTRA_BUILD_DEPS=${{ inputs.extra-source-build-deps }}
+        volumes: ${{ github.workspace }}:/${{ github.workspace }}
         workdir: ${{ github.workspace }}
-        options: -v ${{ github.workspace }}:/${{ github.workspace }}
         shell: bash
         run: |
           set -eu
@@ -135,15 +135,14 @@ runs:
       uses: kohlerdominik/docker-run-action@v1.1.0
       with:
         image: ${{ inputs.docker-image }}
-        options: |
-          -v ${{ env.SOURCE_OUTPUT_DIR }}:/${{ env.SOURCE_OUTPUT_DIR }}
         environment:
           SOURCE_OUTPUT_DIR=${{ env.SOURCE_OUTPUT_DIR }}
           PKG_NAME=${{ env.PKG_NAME }}
           PKG_VERSION=${{ env.PKG_VERSION }}
           LINTIAN_ARGS=${{ inputs.lintian }}
-        shell: bash
+        volumes: ${{ env.SOURCE_OUTPUT_DIR }}:/${{ env.SOURCE_OUTPUT_DIR }}
         workdir: ${{ env.SOURCE_OUTPUT_DIR }}
+        shell: bash
         run: |
           echo 'APT::Get::Assume-Yes "true";' > /etc/apt/apt.conf.d/90aptyes
           apt update
@@ -171,7 +170,9 @@ runs:
 
         echo "::group::Create build input directory"
         # Appending /source because 'dpkg-source --extract' needs the output directory to be non-existent
-        BUILD_INPUT_DIR="$( mktemp --directory --tmpdir="${PWD}" )/source"
+        BUILD_INPUT_BASEDIR="$( mktemp --directory --tmpdir="${PWD}" )"
+        echo BUILD_INPUT_BASEDIR="${BUILD_INPUT_BASEDIR}" >> $GITHUB_ENV
+        BUILD_INPUT_DIR="${BUILD_INPUT_BASEDIR}/source"
         echo BUILD_INPUT_DIR="${BUILD_INPUT_DIR}" >> $GITHUB_ENV
         echo "::endgroup::"
         
@@ -195,9 +196,9 @@ runs:
           BUILD_OUTPUT_DIR=${{ env.BUILD_OUTPUT_DIR }}
           DEB_BUILD_OPTIONS=${{ inputs.DEB_BUILD_OPTIONS }}
         workdir: ${{ env.BUILD_INPUT_DIR }}
-        options: |
-          -v ${{ env.BUILD_INPUT_DIR }}:/${{ env.BUILD_INPUT_DIR }}
-          -v ${{ env.BUILD_OUTPUT_DIR }}:/${{ env.BUILD_OUTPUT_DIR }}
+        volumes: |
+          ${{ env.BUILD_INPUT_BASEDIR }}:/${{ env.BUILD_INPUT_BASEDIR }}
+          ${{ env.BUILD_OUTPUT_DIR }}:/${{ env.BUILD_OUTPUT_DIR }}
         shell: bash
         run: |
           set -eu
@@ -221,7 +222,7 @@ runs:
 
           echo "::group::Create build user"
           adduser --disabled-password --gecos "" builder
-          chown builder:builder . -R
+          chown builder:builder .. -R
           echo "::endgroup::"
 
           echo "::group::Build debian packages"
