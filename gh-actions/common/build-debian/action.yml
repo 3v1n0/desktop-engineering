@@ -213,7 +213,11 @@ runs:
 
           echo "::group::Fully disable internet access"
           apt install net-tools
-          ifconfig down eth0
+          for if in $(ifconfig -a | grep "^[a-z]" | cut -d: -f1); do
+            if [ "$if" != "lo" ]; then
+              ifconfig down "$if"
+            fi
+          fi
           apt remove net-tools
           echo "::endgroup::"
 
