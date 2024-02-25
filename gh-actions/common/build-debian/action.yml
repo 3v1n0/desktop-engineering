@@ -55,7 +55,7 @@ runs:
       uses: addnab/docker-run-action@v3
       with:
         image: ${{ inputs.docker-image }}
-        options: -v ${{ github.workspace }}:/work -w /work -e DEBIAN_FRONTEND=noninteractive -e GITHUB_ENV
+        options: -v ${{ github.workspace }}:/work -w /work -v /github:/github -e DEBIAN_FRONTEND=noninteractive -e GITHUB_ENV
         shell: bash
         run: |
           set -eu
