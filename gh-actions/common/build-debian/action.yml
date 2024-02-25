@@ -47,9 +47,9 @@ inputs:
 #     └── ${{ env.BUILD_OUTPUT_DIR }}
 
 runs:
-  using: "docker"
+  using: "composite"
   # image: ${{ inputs.docker-image }}
-  image: ubuntu:devel
+  # image: ubuntu:devel
   steps:
     - name: Set up source package build
       # uses: docker://${{ inputs.docker-image }}
