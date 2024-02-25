@@ -203,8 +203,8 @@ runs:
         run: |
           set -eu
           echo "::group::Create build user"
-          sudo apt install adduser
-          sudo apt-mark auto adduser
+          apt install adduser
+          apt-mark auto adduser
           adduser --disabled-password --gecos "" builder
           chown builder:builder .. -R
           echo "::endgroup::"
