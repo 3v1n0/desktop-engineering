@@ -98,11 +98,11 @@ runs:
         image: ${{ inputs.docker-image }}
         environment: |
           DEBIAN_FRONTEND=noninteractive
-          EXTRA_BUILD_DEPS="${{ inputs.extra-source-build-deps }}"
-          PKG_NAME="${{ env.PKG_NAME }}"
-          PKG_VERSION="${{ env.PKG_VERSION }}"
+          EXTRA_BUILD_DEPS=${{ inputs.extra-source-build-deps }}
+          PKG_NAME=${{ env.PKG_NAME }}
+          PKG_VERSION=${{ env.PKG_VERSION }}
           SOURCE_OUTPUT_DIR=${{ env.SOURCE_OUTPUT_DIR }}
-          DEB_BUILD_OPTIONS="${{ inputs.DEB_BUILD_OPTIONS }}"
+          DEB_BUILD_OPTIONS=${{ inputs.DEB_BUILD_OPTIONS }}
         workdir: ${{ github.workspace }}
         options: -v ${{ github.workspace }}:/${{ github.workspace }}
         # -e EXTRA_BUILD_DEPS="${{ inputs.extra-source-build-deps }}"
@@ -123,7 +123,6 @@ runs:
 
           echo "::group::Build debian source package"
           dpkg-buildpackage -D -S --sanitize-env
-          set -x
           mv -v ../"${PKG_NAME}_*" ${SOURCE_OUTPUT_DIR}
           echo "::endgroup::"
 
@@ -136,21 +135,22 @@ runs:
 
     - name: Run lintian on sources
       if: inputs.lintian != 'false'
-      uses: addnab/docker-run-action@v3
+      uses: kohlerdominik/docker-run-action@v1.1.0
       with:
         image: ${{ inputs.docker-image }}
         options: |
-          -v ${{ github.workspace }}:/work -w /work
-          -e DEBIAN_FRONTEND=noninteractive
-          -e SOURCE_OUTPUT_DIR="${{ env.SOURCE_OUTPUT_DIR }}"
-          -e LINTIAN_ARGS="${{ inputs.lintian }}"
+          -v ${{ env.SOURCE_OUTPUT_DIR }}:/${{ env.SOURCE_OUTPUT_DIR }}
+        environment:
+          SOURCE_OUTPUT_DIR=${{ env.SOURCE_OUTPUT_DIR }}
+          LINTIAN_ARGS=${{ inputs.lintian }}
         shell: bash
+        workdir: work/${{ env.SOURCE_OUTPUT_DIR }}
         run: |
           echo 'APT::Get::Assume-Yes "true";' > /etc/apt/apt.conf.d/90aptyes
           apt update
           apt dist-upgrade
           apt install lintian
-          lintian ${LINTIAN_ARGS} -- "${SOURCE_OUTPUT_DIR}"/*.changes
+          lintian ${LINTIAN_ARGS} -- *.changes
 
 
     # # - name: Setup build user
