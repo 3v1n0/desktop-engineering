@@ -105,6 +105,8 @@ runs:
           apt update
           apt dist-upgrade
           apt build-dep .
+          # Install extra packages for build-deps, to allow downloading vendored sources
+          apt install ca-certificates git
           echo "::endgroup::"
 
           echo "::group::Build debian source package"
@@ -118,6 +120,19 @@ runs:
         name: ${{ env.PKG_NAME }}_${{ env.PKG_VERSION }} Debian Sources
         path: ${{ env.SOURCE_OUTPUT_DIR }}/
         if-no-files-found: error
+
+    - name: Run lintian on sources
+      if: inputs.lintian != 'false'
+      shell: bash
+      uses: addnab/docker-run-action@v3
+      with:
+        image: ${{ inputs.docker-image }}
+        options: |
+          -v ${{ github.workspace }}:/work -w /work
+          -e DEBIAN_FRONTEND=noninteractive
+          -e PKG_VERSION=${{ env.PKG_VERSION }}
+          -e PKG_VERSION=${{ env.PKG_VERSION }}
+          -e SOURCE_OUTPUT_DIR=${{ env.SOURCE_OUTPUT_DIR }}
 
     # # - name: Setup build user
     # #   run: |
