@@ -101,7 +101,9 @@ runs:
         run: |
           set -eu
           echo "::group::Install build dependencies"
+          echo 'APT::Get::Assume-Yes "true";' > /etc/apt/apt.conf.d/90aptyes
           apt update
+          apt dist-upgrade
           apt build-dep .
           echo "::endgroup::"
 
