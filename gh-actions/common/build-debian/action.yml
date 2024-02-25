@@ -52,18 +52,15 @@ runs:
   # image: ubuntu:devel
   steps:
     - name: Set up source package build
-      # uses: docker://${{ inputs.docker-image }}
       uses: addnab/docker-run-action@v3
       with:
         image: ${{ inputs.docker-image }}
-        options: -v ${{ github.workspace }}:/work -w /work -e DEBIAN_FRONTEND=noninteractive
+        options: -v ${{ github.workspace }}:/work -w /work -e DEBIAN_FRONTEND=noninteractive -e GITHUB_ENV
         shell: bash
-        # env:
-        #   DEBIAN_FRONTEND: noninteractive
-        #   AS_USER: runuser -u builder --
-        #   DEB_BUILD_OPTIONS: ${{ inputs.DEB_BUILD_OPTIONS }}
         run: |
           set -eu
+
+          echo "$GITHUB_ENV"
 
           echo "::group::Install devscripts"
           apt update
