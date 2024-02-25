@@ -123,7 +123,7 @@ runs:
 
           echo "::group::Build debian source package"
           dpkg-buildpackage -D -S --sanitize-env
-          mv -v ../"${PKG_NAME}_*" ${SOURCE_OUTPUT_DIR}
+          mv -v ../"${PKG_NAME}_${PKG_VERSION}.* ${SOURCE_OUTPUT_DIR}
           echo "::endgroup::"
 
     - name: Uploading source packages
