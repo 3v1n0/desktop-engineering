@@ -150,7 +150,7 @@ runs:
           apt dist-upgrade
 
           echo "::group::Install lintian"
-          apt install lintian
+          apt install adduser lintian
           echo "::endgroup::"
 
           echo "::group::Create test user"
@@ -213,7 +213,7 @@ runs:
           for if in $(ifconfig -a | grep "^\w" | cut -d: -f1); do
             if [ "$if" != "lo" ]; then
               echo "Disabling network interface '$if'"
-              ifconfig -v down "$if"
+              ifconfig -v "$if" down
             fi
           done
           apt remove net-tools
