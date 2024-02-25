@@ -143,6 +143,8 @@ runs:
         environment:
           SOURCE_OUTPUT_DIR=${{ env.SOURCE_OUTPUT_DIR }}
           LINTIAN_ARGS=${{ inputs.lintian }}
+          PKG_NAME=${{ env.PKG_NAME }}
+          PKG_VERSION=${{ env.PKG_VERSION }}
         shell: bash
         workdir: ${{ env.SOURCE_OUTPUT_DIR }}
         run: |
@@ -150,7 +152,7 @@ runs:
           apt update
           apt dist-upgrade
           apt install lintian
-          lintian ${LINTIAN_ARGS} -- *.changes
+          lintian ${LINTIAN_ARGS} -- "${PKG_NAME}_${PKG_VERSION}".changes
 
 
     # # - name: Setup build user
