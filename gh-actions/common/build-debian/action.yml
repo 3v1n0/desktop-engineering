@@ -152,7 +152,7 @@ runs:
           apt update
           apt dist-upgrade
           apt install lintian
-          lintian ${LINTIAN_ARGS} -- "${PKG_NAME}_${PKG_VERSION}".changes
+          lintian ${LINTIAN_ARGS} -- "${PKG_NAME}_${PKG_VERSION}_source".changes
 
     - name: Set up package build
       shell: bash
