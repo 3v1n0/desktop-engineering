@@ -102,36 +102,36 @@ jobs:
           path: ${{ env.SOURCE_OUTPUT_DIR }}
           if-no-files-found: error
 
-  run-autopkgtests:
-    name: Run linter
-    needs: build_source_deb
-    runs-on: ubuntu-latest
+  # run-autopkgtests:
+  #   name: Run linter
+  #   needs: build_source_deb
+  #   runs-on: ubuntu-latest
 
-    container:
-      image: ubuntu:devel
+  #   container:
+  #     image: ubuntu:devel
 
-    steps:
-    - name: Prepare container
-      run: |
-        set -eu
+  #   steps:
+  #   - name: Prepare container
+  #     run: |
+  #       set -eu
 
-        echo 'APT::Get::Assume-Yes "true";' > /etc/apt/apt.conf.d/90aptyes
-        apt update
+  #       echo 'APT::Get::Assume-Yes "true";' > /etc/apt/apt.conf.d/90aptyes
+  #       apt update
 
-    - name: Download artifacts
-      uses: actions/download-artifact@v3
+  #   - name: Download artifacts
+  #     uses: actions/download-artifact@v3
 
-    - name: Install dependencies
-      run: |
-        apt install lintian
+  #   - name: Install dependencies
+  #     run: |
+  #       apt install lintian
 
-    - name: Run autopkgtests
-      run: |
-        find
-        mv ./debian-packages-sources/* .
-        mv ./debian-packages/* .
-        autopkgtest --apt-pocket proposed --apt-upgrade --no-built-binaries \
-          *.deb *.changes -- null
+  #   - name: Run autopkgtests
+  #     run: |
+  #       find
+  #       mv ./debian-packages-sources/* .
+  #       mv ./debian-packages/* .
+  #       autopkgtest --apt-pocket proposed --apt-upgrade --no-built-binaries \
+  #         *.deb *.changes -- null
 
   run-autopkgtests:
     name: Run autopkgtests
