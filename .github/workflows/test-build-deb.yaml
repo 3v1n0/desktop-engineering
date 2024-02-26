@@ -88,23 +88,36 @@ jobs:
           docker-image: ubuntu:devel
           extra-source-build-deps: ''
 
-      - name: Install built debs
-        uses: kohlerdominik/docker-run-action@v1.1.0
-        with:
-          image: ubuntu:devel
-          environment: |
-            TERM
-            DEBIAN_FRONTEND
-          workdir: ${{ env.BUILD_OUTPUT_DIR }}
-          volumes: |
-            ${{ env.BUILD_OUTPUT_DIR }}:${{ env.BUILD_OUTPUT_DIR }}
-          shell: bash
-          run: |
-            set -eu
-            echo "::group::Update instance"
-            apt update -y
-            echo "::endgroup::"
+  run-autopkgtests:
+    name: Run autopkgtests
+    needs: build_source_deb
+    runs-on: ubuntu-latest
 
-            echo "::group::Simulate packages install"
-            apt install --simulate *.deb
-            echo "::endgroup::"
+    container:
+      image: ubuntu:devel
+
+    steps:
+    - name: Prepare container
+      run: |
+        set -eu
+
+        echo 'APT::Get::Assume-Yes "true";' > /etc/apt/apt.conf.d/90aptyes
+        apt update
+        apt upgrade
+        apt install git
+        git config --system --add safe.directory $PWD
+
+    - name: Download artifacts
+      uses: actions/download-artifact@v3
+
+    - name: Install dependencies
+      run: |
+        apt install autopkgtest
+
+    - name: Run autopkgtests
+      run: |
+        find
+        mv ./debian-packages-sources/* .
+        mv ./debian-packages/* .
+        autopkgtest --apt-pocket proposed --apt-upgrade --no-built-binaries \
+          *.deb *.changes -- null
