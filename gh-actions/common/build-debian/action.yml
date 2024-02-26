@@ -12,7 +12,7 @@ inputs:
   DEB_BUILD_OPTIONS:
     required: false
     default: ''
-    description: The DEB_BUILD_OPTIONS environment variable.
+    description: The DEB_BUILD_OPTIONS environment variable that is used during builds.
   token:
     required: false
     description: If provided, used for git authentication in the source build
@@ -114,6 +114,11 @@ runs:
           echo "::endgroup::"
 
           cd "${SOURCE_INPUT_DIR}"
+
+          GITHUB_TOKEN="${{ inputs.token }}"
+          if [ -n "${GITHUB_TOKEN}" ]; then
+            git config --system url."https://api:${GITHUB_TOKEN}@github.com/".insteadOf "https://github.com/"
+          fi
 
           echo "::group::Install build dependencies"
           apt build-dep .
