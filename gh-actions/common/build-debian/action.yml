@@ -21,6 +21,10 @@ inputs:
     required: false
     default: ''
     description: The DEB_BUILD_OPTIONS environment variable that is used during builds.
+  lintian:
+    required: false
+    description: Arguments to pass to lintian, if any. Set to false to skip the lintian chek.
+    default: ''
 
 
 # The process:
@@ -156,6 +160,40 @@ runs:
         path: ${{ env.SOURCE_OUTPUT_DIR }}/
         if-no-files-found: error
 
+    - name: Run lintian on sources
+      if: inputs.lintian != 'false'
+      uses: kohlerdominik/docker-run-action@v1.1.0
+      with:
+        image: ${{ inputs.docker-image }}
+        environment:
+          TERM=dumb
+          DEBIAN_FRONTEND=noninteractive
+          SOURCE_OUTPUT_DIR=${{ env.SOURCE_OUTPUT_DIR }}
+        volumes: ${{ env.SOURCE_OUTPUT_DIR }}:${{ env.SOURCE_OUTPUT_DIR }}
+        workdir: ${{ env.SOURCE_OUTPUT_DIR }}
+        shell: bash
+        run: |
+          set -eu
+
+          echo 'APT::Get::Assume-Yes "true";' > /etc/apt/apt.conf.d/90aptyes
+          apt update
+          apt dist-upgrade
+
+          echo "::group::Install lintian"
+          apt install adduser lintian
+          echo "::endgroup::"
+
+          echo "::group::Create test user"
+          adduser --disabled-password --gecos "" tester
+          chown tester:tester . -R
+          echo "::endgroup::"
+
+          echo "::group::Run lintian"
+          runuser -u tester -- \
+            lintian ${{ inputs.lintian }} --pedantic --fail-on error -- \
+              "${{ env.PKG_NAME }}_${{ env.PKG_VERSION }}_source".changes
+          echo "::endgroup::"
+
     - name: Set up package build
       shell: bash
       run: |
@@ -233,3 +271,36 @@ runs:
         name: ${{ env.PKG_NAME }}_${{ env.PKG_VERSION }} Debian Packages
         path: ${{ env.BUILD_OUTPUT_DIR }}/
         if-no-files-found: error
+
+    - name: Run lintian on binaries
+      if: inputs.lintian != 'false'
+      uses: kohlerdominik/docker-run-action@v1.1.0
+      with:
+        image: ${{ inputs.docker-image }}
+        environment:
+          TERM=dumb
+          DEBIAN_FRONTEND=noninteractive
+        volumes: ${{ env.BUILD_OUTPUT_DIR }}:${{ env.BUILD_OUTPUT_DIR }}
+        workdir: ${{ env.BUILD_OUTPUT_DIR }}
+        shell: bash
+        run: |
+          set -eu
+
+          echo 'APT::Get::Assume-Yes "true";' > /etc/apt/apt.conf.d/90aptyes
+          apt update
+          apt dist-upgrade
+
+          echo "::group::Install lintian"
+          apt install adduser lintian
+          echo "::endgroup::"
+
+          echo "::group::Create test user"
+          adduser --disabled-password --gecos "" tester
+          chown tester:tester . -R
+          echo "::endgroup::"
+
+          echo "::group::Run lintian"
+          runuser -u tester -- \
+            lintian ${{ inputs.lintian }} --pedantic --fail-on error -- \
+              *_"${{ env.PKG_VERSION }}"_*.deb
+          echo "::endgroup::"
