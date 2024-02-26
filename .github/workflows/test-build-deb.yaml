@@ -81,5 +81,5 @@ jobs:
           extra-source-build-deps: ''
 
       - name: Ignore failure
-        if: !cancelled()
+        if: '!cancelled()'
         run: exit 0
