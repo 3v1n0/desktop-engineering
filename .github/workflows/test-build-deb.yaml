@@ -165,6 +165,11 @@ jobs:
       with:
         run-id: ${{ needs.build_source_deb.outputs.run-id }}
 
+    - name: Create test user
+      run: |
+        apt install adduser
+        adduser --disabled-password --gecos "" tester
+
     - name: Install dependencies
       run: |
         apt install autopkgtest
@@ -173,6 +178,6 @@ jobs:
       run: |
         mv -v ./*-debian-source/* .
         mv -v ./*-debian-packages/* .
-        autopkgtest --apt-pocket proposed --apt-upgrade --no-built-binaries \
+        autopkgtest --apt-pocket proposed --apt-upgrade --no-built-binaries --user=tester \
           *_${{ needs.build_source_deb.outputs.pkg-version }}*.deb \
           ${{ needs.build_source_deb.outputs.pkg-name }}_${{ needs.build_source_deb.outputs.pkg-version }}_source.changes -- null
