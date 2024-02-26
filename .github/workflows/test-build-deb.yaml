@@ -53,7 +53,7 @@ jobs:
           docker-image: ubuntu:devel
 
   build_source_deb:
-    name: Test build debian package
+    name: Test build quilt debian package
     runs-on: ubuntu-latest
 
     steps:
@@ -79,3 +79,4 @@ jobs:
         with:
           source-dir: ./hello-src
           docker-image: ubuntu:devel
+          extra-source-build-deps: ''

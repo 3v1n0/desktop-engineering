@@ -233,7 +233,6 @@ runs:
           echo "::group::Fully disable internet access for user"
           apt install iptables
           apt-mark auto iptables
-          update-alternatives --set iptables /usr/sbin/iptables-legacy
           iptables -A OUTPUT -m owner --uid-owner $(id -u builder) -j DROP
           echo "::endgroup::"
 
