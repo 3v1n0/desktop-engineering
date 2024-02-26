@@ -149,7 +149,6 @@ jobs:
 
         echo 'APT::Get::Assume-Yes "true";' > /etc/apt/apt.conf.d/90aptyes
         apt update
-        apt install git
 
     - name: Download artifacts
       uses: actions/download-artifact@v4
