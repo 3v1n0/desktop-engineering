@@ -86,16 +86,15 @@ runs:
 
         echo "::group::Create build input directory"
         # Appending /source because 'dpkg-source --extract' needs the output directory to be non-existent
-        BUILD_INPUT_DIR="$( mktemp --directory --tmpdir='.' )/source"
+        BUILD_INPUT_DIR="$( mktemp --directory --tmpdir="${PWD}" )/source"
         echo BUILD_INPUT_DIR="${BUILD_INPUT_DIR}" >> $GITHUB_ENV
         echo "::endgroup::"
         
         echo "::group::Create build output directory"
-        echo BUILD_OUTPUT_DIR="$( mktemp --directory --tmpdir='.' )" >> $GITHUB_ENV
+        echo BUILD_OUTPUT_DIR="$( mktemp --directory --tmpdir="${PWD}" )" >> $GITHUB_ENV
         echo "::endgroup::"
 
         echo "::group::Extract source package"
-        BUILD_INPUT_DIR=$(realpath "${BUILD_INPUT_DIR}")
         cd ${{ env.SOURCE_OUTPUT_DIR }}
         dpkg-source --extract *.dsc "${BUILD_INPUT_DIR}"
         cd -
