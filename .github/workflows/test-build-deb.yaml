@@ -87,3 +87,24 @@ jobs:
           source-dir: ./hello-src
           docker-image: ubuntu:devel
           extra-source-build-deps: ''
+
+      - name: Install built debs
+        uses: kohlerdominik/docker-run-action@v1.1.0
+        with:
+          image: ubuntu:devel
+          environment: |
+            TERM
+            DEBIAN_FRONTEND
+          workdir: ${{ env.BUILD_OUTPUT_DIR }}
+          volumes: |
+            ${{ env.BUILD_OUTPUT_DIR }}:${{ env.BUILD_OUTPUT_DIR }}
+          shell: bash
+          run: |
+            set -eu
+            echo "::group::Update instance"
+            apt update -y
+            echo "::endgroup::"
+
+            echo "::group::Simulate packages install"
+            apt install --simulate *.deb
+            echo "::endgroup::"
