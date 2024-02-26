@@ -2,8 +2,8 @@ name: Test build debian package
 
 on:
   push:
-    branches:
-      - main
+    # branches:
+    #   - main
     paths:
       - gh-actions/common/build-debian/**
       - .github/workflows/test-build-deb*
