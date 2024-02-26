@@ -161,8 +161,7 @@ jobs:
 
     - name: Run autopkgtests
       run: |
-        find
-        mv ./debian-packages/* .
-        mv ./debian-sources/* .
+        mv -v ./*-debian-source/* .
+        mv -v ./*-debian-packages/* .
         autopkgtest --apt-pocket proposed --apt-upgrade --no-built-binaries \
           *.deb *.changes -- null
