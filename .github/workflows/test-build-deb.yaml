@@ -59,12 +59,10 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       run-id: ${{ github.run_id }}
-      pkg-name: ${{ env.PKG_NAME }}
-      pkg-version: ${{ env.PKG_VERSION }}
       source-pkg: ${{ steps.build-debian-source-package-upload-step.outputs.artifact-url }}
       binaries: ${{ steps.build-debian-binary-packages-upload-step.outputs.artifact-url }}
       pkg-name: ${{ env.PKG_NAME }}
-      pkg-version: ${{ env.PKG_NAME }}
+      pkg-version: ${{ env.PKG_VERSION }}
 
     steps:
       - name: Install dependencies
@@ -133,10 +131,8 @@ jobs:
     - name: Create test user
       run: |
         apt install adduser
-        apt-mark auto adduser
         adduser --disabled-password --gecos "" tester
         chown tester:tester . -R
-        echo "::endgroup::"
 
     - name: Run lintian on source package
       run: |
