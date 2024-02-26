@@ -98,7 +98,6 @@ runs:
           TERM=dumb
           DEBIAN_FRONTEND=noninteractive
           PKG_NAME=${{ env.PKG_NAME }}
-          PKG_VERSION=${{ env.PKG_VERSION }}
           SOURCE_INPUT_DIR=${{ github.workspace }}/${{ inputs.source-dir }}
           SOURCE_OUTPUT_DIR=${{ env.SOURCE_OUTPUT_DIR }}
           DEB_BUILD_OPTIONS=${{ inputs.DEB_BUILD_OPTIONS }}
@@ -256,7 +255,10 @@ runs:
 
     - name: See what's around
       shell: bash
-      run: find
+      run: |
+        echo "::group::See what we have around"
+        find
+        echo "::endgroup::"
 
     - name: Run lintian on binaries
       if: inputs.lintian != 'false'
