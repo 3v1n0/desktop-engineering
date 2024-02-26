@@ -79,4 +79,4 @@ jobs:
           source-dir: ./hello-src
           docker-image: ubuntu:devel
           extra-source-build-deps: ''
-          continue-on-error: true
+        continue-on-error: true
