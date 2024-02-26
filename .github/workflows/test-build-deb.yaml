@@ -3,9 +3,9 @@ name: Test build debian package
 on:
   push:
     branches:
-      - main
-    tags:
-      - "*"
+    #   - main
+    # tags:
+    #   - "*"
   pull_request:
 
 env:
