@@ -74,6 +74,7 @@ runs:
         docker-image: ${{ inputs.docker-image }}
         buildpackage-opts: --build=source
         extra-build-deps: ca-certificates git
+        extra-docker-args: -v ${{ github.workspace }}:${{ github.workspace }} -w ${{ github.workspace }}
         before-build-hook: |
           GITHUB_TOKEN="${{ inputs.token }}"
           if [ -n "${GITHUB_TOKEN}" ]; then
