@@ -79,7 +79,4 @@ jobs:
           source-dir: ./hello-src
           docker-image: ubuntu:devel
           extra-source-build-deps: ''
-
-      - name: Ignore failure
-        if: '!cancelled()'
-        run: exit 0
+          continue-on-error: true
