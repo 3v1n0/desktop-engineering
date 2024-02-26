@@ -55,28 +55,47 @@ runs:
       run: |
         set -eu
 
-        echo "::group::Install devscripts"
-        DEBIAN_FRONTEND=noninteractive sudo apt update
-        DEBIAN_FRONTEND=noninteractive sudo apt install -y devscripts
-        echo "::endgroup::"
-
         echo "::group::Create local version with commit and docker container"
         cd '${{ inputs.source-dir }}'
 
-        # Sanitize the docker name so that it stick to debian policy
-        # https://www.debian.org/doc/debian-policy/ch-controlfields.html#version
-        sanitized_docker=$( echo "${{ inputs.docker-image }}" | sed -r 's/[^a-zA-Z0-9.+~]+/+/g' )
-
         # Short commit to avoid "package-has-long-file-name"
-        commit=$(echo ${{ github.sha }} | cut -c1-8)
+        echo VERSION_REF=$(echo ${{ github.sha }} | cut -c1-8)  >> $GITHUB_ENV
 
-        export DEBFULLNAME="GitHub actions runner"
-        export DEBEMAIL="noreply@github.com"
-        debchange --local "~${sanitized_docker}+${commit}" "Github build. Run id: ${{ github.run_id }}. Run number: ${{ github.run_number }}."
-        
+        echo DEBFULLNAME="GitHub actions runner" >> $GITHUB_ENV
+        echo DEBEMAIL="noreply@github.com" >> $GITHUB_ENV
         echo "::endgroup::"
 
+    - name: Prepare source package
+      uses: kohlerdominik/docker-run-action@v1.1.0
+      with:
+        image: ${{ inputs.docker-image }}
+        environment: |
+          TERM=dumb
+          DEBIAN_FRONTEND=noninteractive
+          DEBFULLNAME=${{ env.DEBFULLNAME }}
+          DEBEMAIL=${{ env.DEBEMAIL }}
+        volumes: ${{ github.workspace }}:${{ github.workspace }}
+        workdir: ${{ github.workspace }}/${{ inputs.source-dir }}
+        shell: bash
+        run: |
+          set -eu
+
+          set -eu
+          echo "::group::Update builder instance and install dependencies"
+          echo 'APT::Get::Assume-Yes "true";' > /etc/apt/apt.conf.d/90aptyes
+          apt update
+          apt install devscripts lsb-release
+          echo "::endgroup::"
+
+          dch --local "~$(lsb_release -r -s)+${{ env.VERSION_REF }}" \
+            "Github build. Run id: ${{ github.run_id }}. Run number: ${{ github.run_number }}."
+
+    - name: Parse package source info
+      shell: bash
+      run: |
+        set -eu
         echo "::group::Parsing name and version"
+        cd '${{ inputs.source-dir }}'
         echo PKG_NAME="$( dpkg-parsechangelog --show-field source )" >> $GITHUB_ENV
         echo PKG_VERSION="$( dpkg-parsechangelog --show-field version )" >> $GITHUB_ENV
         cd -
