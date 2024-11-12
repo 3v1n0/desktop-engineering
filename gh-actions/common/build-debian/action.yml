@@ -137,6 +137,10 @@ runs:
           fi
           echo "::endgroup::"
 
+          if command -v git &> /dev/null; then
+            git config --system --add safe.directory "${{ github.workspace }}"
+          fi
+
           GITHUB_TOKEN="${{ inputs.token }}"
           if [ -n "${GITHUB_TOKEN}" ]; then
             git config --system url."https://api:${GITHUB_TOKEN}@github.com/".insteadOf "https://github.com/"
