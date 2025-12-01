@@ -10,12 +10,18 @@ inputs:
     description: |
       The path to the source .changes file.
       The the rest of the source files are expected to be in the same directory.
-    required: true
+    required: false
+
+  source-name:
+    description: |
+      The source name to test with, alternative to source-changes
+    required: false
 
   debs-dir:
     description: |
       Directory where the deb files are located.
-      It will be the same of the source-dir if not provided.
+      It will be the same path of the source-changes if not provided or the
+      workspace directory.
     required: false
 
   lxd-image:
@@ -43,6 +49,17 @@ runs:
         # Check prerequisites
         echo "::group::Check prerequisites"
         set -eux
+
+        if [ -z "${{ inputs.source-changes }}" ]; then
+          if [ -z "${{ inputs.source-name }}" ]; then
+            echo "No source .changes file or source name provided" | \
+              tee "${GITHUB_STEP_SUMMARY}"
+            exit 1
+          fi
+
+          echo "TEST_SRC=${{ inputs.source-name }}" >> "${GITHUB_ENV}"
+          exit 0
+        fi
 
         sudo apt install -y dctrl-tools
         pkg_version=$(grep-dctrl -s Version -n - "${{ inputs.source-changes }}")
@@ -74,6 +91,8 @@ runs:
 
           echo "The package source ${{ inputs.source-changes }} will be compiled before being tested."
         fi
+
+        echo "TEST_SRC=${{ inputs.source-changes }}" >> "${GITHUB_ENV}"
 
         echo "::endgroup::"
 
@@ -156,7 +175,6 @@ runs:
           --apt-upgrade
           --summary-file "${GITHUB_STEP_SUMMARY}"
           ${{ inputs.autopkgtest-args }}
-          "${{ inputs.source-changes }}"
         )
 
         if [ -n "${{ env.DEBS_DIR != '' && 'true' || '' }}" ]; then
@@ -165,6 +183,8 @@ runs:
             --no-built-binaries
           )
         fi
+
+        args+=("${{ env.TEST_SRC }}")
 
         args+=(-- lxd ${{ env.AUTOPKGTEST_IMAGE }})
 
